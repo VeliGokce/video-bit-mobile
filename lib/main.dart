@@ -66,6 +66,7 @@ class _ConverterPageState extends State<ConverterPage> {
   final _bitrateController = TextEditingController(text: '5');
   String? _inputPath;
   String? _outputPath;
+  String _sourceBitrate = 'Unknown';
   String? _selectedPreset = '5';
   double _progress = 0;
   int _durationMs = 0;
@@ -85,9 +86,47 @@ class _ConverterPageState extends State<ConverterPage> {
     setState(() {
       _inputPath = path;
       _outputPath = null;
+      _sourceBitrate = 'Reading…';
       _progress = 0;
       _status = 'Video selected';
     });
+    await _readSourceBitrate(path);
+  }
+
+  Future<void> _readSourceBitrate(String path) async {
+    try {
+      final probe = await FFprobeKit.getMediaInformation(path);
+      final properties = probe.getMediaInformation()?.getAllProperties();
+      final streams =
+          (properties?['streams'] as List?)?.cast<Map>() ?? const [];
+      int? bitrate;
+      for (final stream in streams) {
+        if (stream['codec_type'] == 'video') {
+          bitrate = int.tryParse('${stream['bit_rate'] ?? ''}');
+          break;
+        }
+      }
+      final format = properties?['format'] as Map?;
+      bitrate ??= int.tryParse('${format?['bit_rate'] ?? ''}');
+      if (!mounted || _inputPath != path) return;
+      setState(() => _sourceBitrate = _formatBitrate(bitrate));
+    } catch (_) {
+      if (!mounted || _inputPath != path) return;
+      setState(() => _sourceBitrate = 'Unknown');
+    }
+  }
+
+  String _formatBitrate(int? bitsPerSecond) {
+    if (bitsPerSecond == null || bitsPerSecond <= 0) return 'Unknown';
+    if (bitsPerSecond < 1000000) {
+      return '${(bitsPerSecond / 1000).round()} kbps';
+    }
+    final mbps = bitsPerSecond / 1000000;
+    final hundredths = (mbps * 100).round();
+    if (hundredths % 100 == 0) return '${hundredths ~/ 100} Mbps';
+    if (hundredths % 10 == 0)
+      return '${(hundredths / 100).toStringAsFixed(1)} Mbps';
+    return '${(hundredths / 100).toStringAsFixed(2)} Mbps';
   }
 
   int? _targetKbps() {
@@ -276,6 +315,18 @@ class _ConverterPageState extends State<ConverterPage> {
                               overflow: TextOverflow.ellipsis,
                               textAlign: TextAlign.center,
                               style: const TextStyle(color: Color(0xFFBDBDBD))),
+                          if (_inputPath != null) ...[
+                            const SizedBox(height: 6),
+                            Text(
+                              'Source bitrate: $_sourceBitrate',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: Color(0xFFFF6874),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
