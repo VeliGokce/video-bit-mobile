@@ -15,12 +15,9 @@ A focused mobile utility that changes only a video's target bitrate while keepin
 
 ## Downloads
 
-Every push to `main` produces downloadable Android and unsigned iOS workflow artifacts. Tags matching `v*` publish a GitHub Release containing:
+Every push to `main` produces a downloadable Android workflow artifact. Tags matching `v*` publish a GitHub Release containing:
 
 - `BitShift-Android.apk` — directly installable on Android.
-- `BitShift-iOS-unsigned.zip` — an unsigned application bundle for testing or later signing.
-
-iOS does not permit a generally installable IPA without an Apple Developer certificate and provisioning profile. Add signing credentials to the workflow before App Store, TestFlight, or ad-hoc distribution.
 
 ## Local development
 

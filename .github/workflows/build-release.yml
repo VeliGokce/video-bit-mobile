@@ -36,27 +36,3 @@ jobs:
         with:
           files: BitShift-Android.apk
           generate_release_notes: true
-
-  ios:
-    name: iOS unsigned app
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          cache: true
-      - run: flutter pub get
-      - run: flutter build ios --release --no-codesign
-      - name: Package unsigned app
-        run: ditto -c -k --sequesterRsrc --keepParent build/ios/iphoneos/Runner.app BitShift-iOS-unsigned.zip
-      - uses: actions/upload-artifact@v4
-        with:
-          name: BitShift-iOS-unsigned
-          path: BitShift-iOS-unsigned.zip
-      - name: Attach unsigned iOS build to tagged release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: BitShift-iOS-unsigned.zip
-          generate_release_notes: true
