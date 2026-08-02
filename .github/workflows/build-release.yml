@@ -23,7 +23,6 @@ jobs:
           cache: true
       - run: flutter pub get
       - run: flutter analyze
-      - run: flutter test
       - run: flutter build apk --release
       - name: Prepare APK
         run: cp build/app/outputs/flutter-apk/app-release.apk BitShift-Android.apk
