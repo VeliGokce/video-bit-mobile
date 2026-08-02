@@ -1,0 +1,25 @@
+name: video_bit_mobile
+description: A focused mobile video bitrate converter.
+publish_to: none
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.3 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  ffmpeg_kit_flutter_new: ^4.5.3
+  file_picker: ^8.0.5
+  path: ^1.9.0
+  path_provider: ^2.1.4
+  open_filex: ^4.7.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.2
+
+flutter:
+  uses-material-design: true
