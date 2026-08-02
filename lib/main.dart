@@ -124,8 +124,9 @@ class _ConverterPageState extends State<ConverterPage> {
     final mbps = bitsPerSecond / 1000000;
     final hundredths = (mbps * 100).round();
     if (hundredths % 100 == 0) return '${hundredths ~/ 100} Mbps';
-    if (hundredths % 10 == 0)
+    if (hundredths % 10 == 0) {
       return '${(hundredths / 100).toStringAsFixed(1)} Mbps';
+    }
     return '${(hundredths / 100).toStringAsFixed(2)} Mbps';
   }
 
