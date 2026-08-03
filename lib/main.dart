@@ -134,7 +134,7 @@ class _ConverterPageState extends State<ConverterPage> {
     final value = double.tryParse(
       _bitrateController.text.trim().replaceAll(',', '.'),
     );
-    if (value == null || value < 0.512 || value > 30) return null;
+    if (value == null || value < 0.1 || value > 30) return null;
     return (value * 1000).round();
   }
 
@@ -146,6 +146,22 @@ class _ConverterPageState extends State<ConverterPage> {
         _ => 'libx264',
       };
 
+  String _rateControlArgs(String encoder, int requestedKbps) {
+    // x264's measured MP4 stream rate is typically about 2% below its VBV
+    // target because of startup/final buffer behavior. Compensate so media
+    // analyzers report the value the user requested, within roughly 1%.
+    final encoderKbps =
+        encoder == 'libx264' ? (requestedKbps * 1.02).round() : requestedKbps;
+    final common = '-b:v:0 ${encoderKbps}k -minrate:v:0 ${encoderKbps}k '
+        '-maxrate:v:0 ${encoderKbps}k -bufsize:v:0 ${encoderKbps * 2}k';
+    return switch (encoder) {
+      'libx264' => '$common -x264-params nal-hrd=cbr:filler=1',
+      'libx265' => '$common -x265-params '
+          'vbv-maxrate=$encoderKbps:vbv-bufsize=${encoderKbps * 2}:strict-cbr=1',
+      _ => common,
+    };
+  }
+
   String _quote(String value) => "'${value.replaceAll("'", "'\\''")}'";
 
   Future<void> _convert() async {
@@ -156,7 +172,7 @@ class _ConverterPageState extends State<ConverterPage> {
       return;
     }
     if (kbps == null) {
-      _message('Enter a bitrate from 1 to 30 Mbps.');
+      _message('Enter a bitrate from 0.1 to 30 Mbps.');
       return;
     }
 
@@ -182,6 +198,7 @@ class _ConverterPageState extends State<ConverterPage> {
         }
       }
       final encoder = _encoderFor(video?['codec_name']?.toString());
+      final rateControl = _rateControlArgs(encoder, kbps);
 
       final tempDir = await getTemporaryDirectory();
       final safeName = p
@@ -194,8 +211,7 @@ class _ConverterPageState extends State<ConverterPage> {
       setState(() => _status = 'Changing video bitrate…');
       final command =
           '-y -i ${_quote(input)} -map 0:v:0 -map 0:a? -map_metadata 0 '
-          '-c copy -c:v:0 $encoder -b:v:0 ${kbps}k '
-          '-maxrate:v:0 ${kbps}k -bufsize:v:0 ${kbps * 2}k '
+          '-c copy -c:v:0 $encoder $rateControl '
           '-movflags +faststart ${_quote(tempOutput)}';
 
       final completed = Completer<bool>();
@@ -379,7 +395,7 @@ class _ConverterPageState extends State<ConverterPage> {
                             onChanged: (_) =>
                                 setState(() => _selectedPreset = null),
                             decoration: const InputDecoration(
-                              labelText: 'Custom value (1–30)',
+                              labelText: 'Custom value (0.1–30)',
                               suffixText: 'Mbps',
                               filled: true,
                               fillColor: Color(0xFF0D0D0D),
