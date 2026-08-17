@@ -31,6 +31,7 @@ jobs:
         with:
           name: BitShift-Android
           path: BitShift-Android.apk
+          retention-days: 1
       - name: Publish tagged release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
